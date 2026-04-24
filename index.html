@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>iPad 觸控乒乓球</title>
+    <style>
+        body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; overflow: hidden; }
+        canvas { border: 2px solid #fff; background: #000; max-width: 100%; max-height: 100%; }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="800" height="400"></canvas>
+
+<script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    let paddleHeight = 80, paddleWidth = 10;
+    let leftPaddleY = (canvas.height - paddleHeight) / 2;
+    let rightPaddleY = (canvas.height - paddleHeight) / 2;
+    let ballX = canvas.width / 2, ballY = canvas.height / 2;
+    let ballDX = 4, ballDY = 4, ballSize = 8;
+    let score = 0;
+
+    // 觸控控制：手指滑動時更新左側球拍位置
+    canvas.addEventListener("touchmove", function(e) {
+        e.preventDefault(); // 防止網頁捲動
+        let touch = e.touches[0];
+        let rect = canvas.getBoundingClientRect();
+        let scaleY = canvas.height / rect.height; // 修正縮放比例
+        leftPaddleY = (touch.clientY - rect.top) * scaleY - paddleHeight / 2;
+    }, { passive: false });
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // 畫球拍
+        ctx.fillStyle = "#FFF";
+        ctx.fillRect(10, leftPaddleY, paddleWidth, paddleHeight); // 玩家
+        ctx.fillRect(canvas.width - 20, rightPaddleY, paddleWidth, paddleHeight); // 電腦
+
+        // 畫球
+        ctx.beginPath();
+        ctx.arc(ballX, ballY, ballSize, 0, Math.PI*2);
+        ctx.fill();
+
+        // 簡單的電腦 AI
+        if (rightPaddleY + paddleHeight/2 < ballY) rightPaddleY += 3;
+        else rightPaddleY -= 3;
+
+        // 球的移動邏輯
+        ballX += ballDX; ballY += ballDY;
+
+        // 撞牆偵測
+        if (ballY < 0 || ballY > canvas.height) ballDY = -ballDY;
+
+        // 撞球拍偵測
+        if (ballX < 30 && ballY > leftPaddleY && ballY < leftPaddleY + paddleHeight) ballDX = -ballDX;
+        if (ballX > canvas.width - 30 && ballY > rightPaddleY && ballY < rightPaddleY + paddleHeight) ballDX = -ballDX;
+
+        // 出界重置
+        if (ballX < 0 || ballX > canvas.width) { ballX = canvas.width/2; ballDX = -ballDX; }
+
+        requestAnimationFrame(draw);
+    }
+    draw();
+</script>
+</body>
+</html>
